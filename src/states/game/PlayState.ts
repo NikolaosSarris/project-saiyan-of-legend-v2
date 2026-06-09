@@ -83,6 +83,7 @@ export default class PlayState extends State {
     }
 
     exit(): void {
+        timer.clear();
         sounds.pause(SoundName.BattleTheme);
     }
 
@@ -162,8 +163,18 @@ export default class PlayState extends State {
         this.player1.velocity.x = savedStateData.player1.velocity.x;
         this.player1.velocity.y = savedStateData.player1.velocity.y;
         this.player1.isFacingRight = savedStateData.player1.isFacingRight;
+        const safeStates: string[] = [
+            FighterStateName.Idling,
+            FighterStateName.Walking,
+            FighterStateName.Jumping,
+            FighterStateName.Falling,
+            FighterStateName.Blocking,
+        ];
+        const safeState = (name: string) =>
+            safeStates.includes(name) ? name : FighterStateName.Idling;
+
         this.player1.stateMachine.change(
-            savedStateData.player1.currentStateName
+            safeState(savedStateData.player1.currentStateName)
         );
 
         this.player2.health = savedStateData.player2.health;
@@ -171,7 +182,7 @@ export default class PlayState extends State {
         this.player2.velocity.y = savedStateData.player2.velocity.y;
         this.player2.isFacingRight = savedStateData.player2.isFacingRight;
         this.player2.stateMachine.change(
-            savedStateData.player2.currentStateName
+            safeState(savedStateData.player2.currentStateName)
         );
 
         //Creates health bars
@@ -205,6 +216,21 @@ export default class PlayState extends State {
 
         this.player1.update(dt);
         this.player2.update(dt);
+
+        const lockFacing = [
+            FighterStateName.Attacking,
+            FighterStateName.Special1,
+            FighterStateName.Dying,
+        ] as const;
+        const shouldAutoFace = (f: Fighter) =>
+            !lockFacing.includes(f.stateMachine.currentState.name as typeof lockFacing[number]);
+
+        if (shouldAutoFace(this.player1)) {
+            this.player1.isFacingRight = this.player1.position.x < this.player2.position.x;
+        }
+        if (shouldAutoFace(this.player2)) {
+            this.player2.isFacingRight = this.player2.position.x < this.player1.position.x;
+        }
 
         //Checks if a hit is not being processed then checks for collisions
         if (!this.isProcessingHit) {
@@ -243,7 +269,7 @@ export default class PlayState extends State {
      * Checks if either player's attack hitbox collides with the other player's body.
      */
     checkAttackCollisions(): void {
-        //Checks if player2's attack hit player1's body
+        //Checks if player1's attack hit player2's body
         if (this.player1.attackHitboxCollidesWith(this.player2)) {
             this.handleAttackHit(this.player1, this.player2);
         }
@@ -261,6 +287,12 @@ export default class PlayState extends State {
 
         //Deals damage to the victim
         victim.receiveDamage(attacker.currentMove!.damage);
+
+        //Applies knockback if victim is alive and not blocking
+        if (!victim.isBlocking && victim.health > 0) {
+            const direction = victim.position.x >= attacker.position.x ? 1 : -1;
+            victim.velocity.x = direction * (attacker.currentMove === attacker.moves.beam ? 400 : 200);
+        }
 
         //Checks if the victim is blocking and plays the hit sound
         if (
@@ -284,32 +316,31 @@ export default class PlayState extends State {
      * Checks if either player is dead and if so, changes the game state to the victory state.
      */
     checkVictory(): void {
-        //Checks if either player is dead
-        if ((this.player1.isDead || this.player2.isDead) && !this.isGameOver) {
-            this.isGameOver = true;
+        const p1Dead = this.player1.isDead;
+        const p2Dead = this.player2.isDead;
+        if (!(p1Dead || p2Dead) || this.isGameOver) return;
 
-            //Determines the winner
-            const winner = this.player1.isDead ? this.player2 : this.player1;
+        this.isGameOver = true;
+        const isDraw = p1Dead && p2Dead;
+        let winnerName: string;
+
+        if (isDraw) {
+            winnerName = "DRAW";
+        } else {
+            const winner = p1Dead ? this.player2 : this.player1;
             winner.wins++;
-
-            //Plays a victory sound
-            this.player1.isDead
+            winnerName = winner.name;
+            p1Dead
                 ? sounds.play(SoundName.VegetaWin)
                 : sounds.play(SoundName.GokuWin);
-
-            //Waits 3 seconds before transitioning to the victory state
-            timer.addTask(
-                () => {},
-                0,
-                3,
-                () => {
-                    stateMachine.change(GameStateName.VictoryScreen, {
-                        winnerName: winner.name,
-                        player1Wins: this.player1.wins,
-                        player2Wins: this.player2.wins,
-                    });
-                }
-            );
         }
+
+        timer.addTask(() => {}, 0, 3, () => {
+            stateMachine.change(GameStateName.VictoryScreen, {
+                winnerName,
+                player1Wins: this.player1.wins,
+                player2Wins: this.player2.wins,
+            });
+        });
     }
 }

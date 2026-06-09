@@ -2,6 +2,8 @@ import FighterState from "./FighterState";
 import Fighter from "../../entities/Fighter";
 
 export default class FighterDyingState extends FighterState {
+    hasCollapsed: boolean = false;
+
     /**
      * Creates a new FighterDyingState instance.
      *
@@ -26,6 +28,7 @@ export default class FighterDyingState extends FighterState {
         this.fighter.isInvincible = true;
 
         this.fighter.setDimensionsForAnimation("death", 0);
+        this.hasCollapsed = false;
     }
 
     /**
@@ -36,7 +39,8 @@ export default class FighterDyingState extends FighterState {
     update(dt: number): void {
         super.update(dt);
 
-        if (this.fighter.currentAnimation.isHalfwayDone()) {
+        if (!this.hasCollapsed && this.fighter.currentAnimation.isHalfwayDone()) {
+            this.hasCollapsed = true;
             this.fighter.setDimensionsForAnimation("death", 1);
             this.fighter.position.y += 10;
         }

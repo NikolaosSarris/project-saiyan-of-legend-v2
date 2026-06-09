@@ -18,6 +18,7 @@ export default class FighterAttackingState extends FighterState {
      * Called when entering the attacking state.
      */
     enter(): void {
+        this.fighter.isInvincible = true;
         sounds.play(SoundName.Punch);
 
         this.fighter.currentMove = this.fighter.moves.punch;
@@ -34,6 +35,7 @@ export default class FighterAttackingState extends FighterState {
      * Clears the attack hitbox by setting its position and dimensions to zero.
      */
     exit(): void {
+        this.fighter.isInvincible = false;
         this.clearAttackHitbox();
     }
 

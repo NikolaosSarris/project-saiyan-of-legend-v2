@@ -20,7 +20,7 @@ export default class MoveFactory {
                 height: fighterHeight * 0.6,
             },
             {
-                x: -10,
+                x: -20,
                 y: fighterHeight * 0.2,
                 width: 20,
                 height: fighterHeight * 0.6,

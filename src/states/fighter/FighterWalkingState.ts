@@ -22,7 +22,6 @@ export default class FighterWalkingState extends FighterState {
      * Called when entering the walking state.
      */
     enter(): void {
-        this.fighter.isOnGround = true;
         this.fighter.currentAnimation = this.fighter.animations.walk;
         this.fighter.currentAnimation.refresh();
 

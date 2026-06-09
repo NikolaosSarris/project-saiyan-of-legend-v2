@@ -23,8 +23,6 @@ export default class FighterTakingDamageState extends FighterState {
         this.fighter.currentAnimation = this.fighter.animations.damage;
         this.fighter.currentAnimation.refresh();
 
-        //Stops movement and makes fighter invincible
-        this.fighter.velocity.x = 0;
         this.fighter.isInvincible = true;
 
         //Sets dimensions for damage animation
@@ -47,6 +45,8 @@ export default class FighterTakingDamageState extends FighterState {
      */
     update(dt: number): void {
         super.update(dt);
+        this.fighter.velocity.x *= 0.8;
+        if (Math.abs(this.fighter.velocity.x) < 5) this.fighter.velocity.x = 0;
 
         if (this.fighter.currentAnimation.isDone()) {
             if (this.fighter.isOnGround) {

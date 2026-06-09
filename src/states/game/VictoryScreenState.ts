@@ -46,7 +46,7 @@ export default class VictoryScreenState extends State {
     }
 
     exit(): void {
-        sounds.stop(SoundName.BattleTheme);
+        sounds.stop(SoundName.MainTheme);
     }
 
     update(): void {
@@ -78,14 +78,17 @@ export default class VictoryScreenState extends State {
         //Displays the winners name and that they won
         context.font = "24px PressStart2P";
         context.fillStyle = Colour.Gold;
-        context.fillText(
-            this.winnerName.toUpperCase(),
-            CANVAS_WIDTH / 2,
-            centerY - 40
-        );
-        context.font = "24px PressStart2P";
-        context.fillStyle = Colour.Gold;
-        context.fillText("WINS", CANVAS_WIDTH / 2, centerY + 10);
+        if (this.winnerName === "DRAW") {
+            context.fillText("IT'S A", CANVAS_WIDTH / 2, centerY - 40);
+            context.fillText("DRAW!", CANVAS_WIDTH / 2, centerY + 10);
+        } else {
+            context.fillText(
+                this.winnerName.toUpperCase(),
+                CANVAS_WIDTH / 2,
+                centerY - 40
+            );
+            context.fillText("WINS", CANVAS_WIDTH / 2, centerY + 10);
+        }
 
         context.fillStyle = Colour.White;
 

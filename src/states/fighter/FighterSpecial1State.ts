@@ -7,6 +7,7 @@ import FighterState from "./FighterState";
 export default class FighterSpecial1State extends FighterState {
     originalX!: number;
     originalY!: number;
+    originalWidth!: number;
     groundY!: number;
 
     /**
@@ -31,9 +32,10 @@ export default class FighterSpecial1State extends FighterState {
         this.fighter.currentAnimation = this.fighter.animations.special1;
         this.fighter.currentAnimation.refresh();
 
-        //Saves the original position
+        //Saves the original position and idle width before dimensions change
         this.originalX = this.fighter.position.x;
         this.originalY = this.fighter.position.y;
+        this.originalWidth = this.fighter.dimensions.x;
 
         //Calculates where the ground is
         this.groundY = this.fighter.position.y + this.fighter.dimensions.y;
@@ -68,6 +70,11 @@ export default class FighterSpecial1State extends FighterState {
 
         //Keeps the bottom anchored to the ground
         this.fighter.position.y = this.groundY - this.fighter.dimensions.y;
+
+        //When facing left, anchor the right edge so the beam expands leftward
+        if (!this.fighter.isFacingRight) {
+            this.fighter.position.x = (this.originalX + this.originalWidth) - this.fighter.dimensions.x;
+        }
 
         //Sets attack hitbox during beam frame
         if (currentFrame === 6) {
